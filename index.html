@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+  <script src="http://cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+  <script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <title>带进度条的文件上传</title>
+  <style>
+    .list-group {
+      border: 2px dashed #ccc;
+      min-height: 100px;
+      padding: 10px;
+    }
+    
+    .list-group p {
+      color: #ccc;
+      line-height: 100px;
+      font-size: 30px;
+      text-align: center;
+    }
+    
+    img {
+      max-width: 100px;
+    }
+    
+    #eventstatus {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body ontouchstart>
+  <div class="container">
+    <div class="row">
+      <ul class="list-group">
+
+      </ul>
+      <form action="" name="upload">
+        <a href="javascript:;" id="selectbtn" class="btn btn-primary">
+            上传多个文件
+          </a>
+        <input type="file" style="display: none;" name="fileselect" multiple>
+      </form>
+      <div id="eventstates"></div>
+    </div>
+  </div>
+  <script>
+    const listGroup = document.querySelector('.list-group')
+    //找form的input的好方法
+    const oFileInput = document.forms['upload']['fileselect']
+    // console.log(oFileInput)
+
+    //进度条
+    const eventstates = document.getElementById('eventstates')
+
+    document.getElementById('selectbtn').addEventListener('click', (e) => {
+      //隔山打牛
+      e.preventDefault()
+      oFileInput.click()
+    }, false)
+
+    oFileInput.addEventListener('change', displayFileInfo, false)
+
+    //上传之前先预览,event时间对象
+    function displayFileInfo(event) {
+      //事件目标
+      event.preventDefault()
+      let files = event.target.files || event.dataTransfer.files
+      for (let file of files) {
+        let li = document.createElement('li'),
+          img = document.createElement('img'),
+          thumbnailContainer = document.createElement('div')
+        //立即生成文件的url,生成了一个blob的协议文件,硬盘上的文件以浏览器的方式访问打开，临时地址，暂时预览
+        url = window.URL.createObjectURL(file)
+
+        img.src = url
+
+        img.onload = function () {
+          //释放资源
+          window.URL.revokeObjectURL(url)
+        }
+        // img.src = 'https://sfault-avatar.b0.upaiyun.com/249/954/249954451-58ddf75aae082_big64'
+        thumbnailContainer.appendChild(img)
+        img.classList.add('thumbnail')
+        thumbnailContainer.classList.add('col-md-3')
+        listGroup.appendChild(thumbnailContainer)
+
+     //上传
+          //读取条
+          // < div class="progress" >
+          //   <div class="progress-bar" role= "progressbar" aria- valuenow="60" aria- valuemin="0" aria- valuemax="100" style= "width: 6%;" >
+          //     <span class="sr-only" > 60 % Complete < /span>
+          //       < /div>
+          //       < /div>
+        let progress = document.createElement('div')
+        progress.classList.add("progress","progress-strip","active")
+        let progressBar = document.createElement('div')
+        progressBar.classList.add("progress-bar")
+        progress.appendChild(progressBar)
+        // eventstates.appendChild(progress)
+
+  //二进制读取文件，三个事件
+        let reader = new FileReader()
+        reader.readAsBinaryString(file)
+
+        reader.onloadstart = function() {
+          eventstates.appendChild(progress)
+        }
+
+        reader.onprogress = function() {
+          //加载进度
+          let progressStatus = Math.round(event.loaded/event.total*100) + '%'
+          progressBar.style.width = progressStatus
+        }
+
+        reader.onload = function() {
+          const nd_progressBar = document.querySelector('.progress-bar')
+          const progress = document.querySelector('.progress')
+          // console.log(nd_progressBar)
+          progress.removeChild(nd_progressBar)
+          const p = document.createElement('p');
+          p.textContent = '读取完成'
+          progress.appendChild(p)
+          
+        }
+      }
+    }
+
+    // 允许拖拽的区域
+    listGroup.innerHTML = '<p class="hint">拖拽文件到这</p>'
+
+    listGroup.addEventListener('dragover', (event)=>{
+      //bug大坑
+      event.preventDefault()
+      document.querySelector('.hint').innerHTML = '松手上传文件'
+    })
+
+    listGroup.addEventListener('dragleave', (event)=>{
+      document.querySelector('.hint').innerHTML = '拖拽文件到这'
+    })
+
+    listGroup.addEventListener('drop', displayFileInfo, false)
+  </script>
+</body>
+
+</html>
